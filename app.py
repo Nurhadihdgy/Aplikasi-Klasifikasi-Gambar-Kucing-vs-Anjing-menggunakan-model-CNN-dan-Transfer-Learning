@@ -137,24 +137,36 @@ if uploaded_file is not None:
     st.markdown("### 🎯 **Hasil Prediksi**")
     col1, col2 = st.columns(2)
 
+    # ================= Hasil Klasifikasi =================
     with col1:
-        card(
-            title="🧩 Hasil Klasifikasi",
-            text=f"<h3 style='text-align:center'>{label}</h3>",
-            styles={
-                "card": {"background-color": "#f1f3f4", "border-radius": "15px"},
-                "title": {"font-size": "20px", "color": "#444"},
-            },
+        st.markdown(
+            f"""
+            <div style="
+                background-color:#f1f3f4; 
+                border-radius:15px; 
+                padding:20px; 
+                text-align:center;
+            ">
+                <h3 style="margin:0;">{label}</h3>
+            </div>
+            """,
+            unsafe_allow_html=True
         )
 
+    # ================= Tingkat Keyakinan Model =================
     with col2:
-        card(
-            title="📊 Tingkat Keyakinan Model",
-            text=f"<h3 style='text-align:center'>{confidence*100:.2f}%</h3>",
-            styles={
-                "card": {"background-color": "#e9f7ef", "border-radius": "15px"},
-                "title": {"font-size": "20px", "color": "#444"},
-            },
+        st.markdown(
+            f"""
+            <div style="
+                background-color:#e9f7ef; 
+                border-radius:15px; 
+                padding:20px; 
+                text-align:center;
+            ">
+                <h3 style="margin:0;">{confidence*100:.2f}%</h3>
+            </div>
+            """,
+            unsafe_allow_html=True
         )
 
 else:
