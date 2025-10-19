@@ -4,6 +4,8 @@ import numpy as np
 from PIL import Image
 from streamlit_extras.card import card
 from streamlit_extras.let_it_rain import rain
+import os
+import gdown
 
 # ===========================
 # 1. Konfigurasi Halaman
@@ -55,17 +57,25 @@ with st.sidebar:
     st.caption("🧠 Dibuat oleh Kelompok AI Week 8 - BINUS Online")
 
 # ===========================
-# 3. Load Model (dengan fallback)
+# 3. Fungsi Download & Load Model
 # ===========================
+def download_from_gdrive(file_id, output_path):
+    """Download file dari Google Drive jika belum ada di lokal"""
+    if not os.path.exists(output_path):
+        url = f"https://drive.google.com/uc?id={file_id}"
+        gdown.download(url, output_path, quiet=False)
+    return output_path
+
 @st.cache_resource
-def load_model_safe(path, model_type):
+def load_model_safe_gdrive(local_path, gdrive_file_id, model_type):
+    """Load model Keras, fallback rebuild jika gagal"""
+    path = download_from_gdrive(gdrive_file_id, local_path)
+    
     try:
-        # coba load normal
         return tf.keras.models.load_model(path, compile=False)
     except Exception as e:
         st.warning(f"⚠️ Gagal load model. Mencoba rebuild...")
-
-        # Rebuild arsitektur jika model transfer learning
+        
         if model_type == "mobilenet":
             base_model = tf.keras.applications.MobileNetV2(
                 input_shape=(160, 160, 3),
@@ -80,7 +90,7 @@ def load_model_safe(path, model_type):
                 tf.keras.layers.Dropout(0.4),
                 tf.keras.layers.Dense(1, activation='sigmoid')
             ])
-        else:
+        else:  # CNN Biasa
             model = tf.keras.Sequential([
                 tf.keras.layers.Conv2D(32, (3,3), activation='relu', input_shape=(150,150,3)),
                 tf.keras.layers.MaxPooling2D(2,2),
@@ -100,11 +110,20 @@ def load_model_safe(path, model_type):
             st.error("❌ Model gagal dimuat, pastikan file model sesuai dengan jenis arsitektur.")
             return None
 
-cnn_model = load_model_safe('model_cats_dogs.h5', model_type='cnn')
-mobilenet_model = load_model_safe('mobilenet_cats_dogs.keras', model_type='mobilenet')
+# ===========================
+# 4. ID Google Drive Model
+# ===========================
+FILE_ID_CNN = "1bUfKbyoEmZG25eYXW_Uz1pUUdH35YfF1"
+FILE_ID_MOBILENET = "11MT4ubPGdiTGOC8hr_xZbOeKriXwe0RM"
 
 # ===========================
-# 4. Upload & Prediksi
+# 5. Load Model
+# ===========================
+cnn_model = load_model_safe_gdrive('model_cats_dogs.h5', FILE_ID_CNN, 'cnn')
+mobilenet_model = load_model_safe_gdrive('mobilenet_cats_dogs.keras', FILE_ID_MOBILENET, 'mobilenet')
+
+# ===========================
+# 6. Upload & Prediksi
 # ===========================
 uploaded_file = st.file_uploader("📸 Upload Gambar Kucing atau Anjing", type=["jpg", "jpeg", "png"])
 
@@ -161,7 +180,7 @@ else:
     st.info("📤 Silakan upload gambar terlebih dahulu untuk melihat hasil prediksi.")
 
 # ===========================
-# 5. Footer
+# 7. Footer
 # ===========================
 st.markdown("---")
 st.markdown("""

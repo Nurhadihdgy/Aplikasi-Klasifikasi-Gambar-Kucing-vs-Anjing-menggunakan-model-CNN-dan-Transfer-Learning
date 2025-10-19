@@ -1,0 +1,14 @@
+# Abaikan file model besar
+*.h5
+*.keras
+*.hdf5
+
+# Abaikan file sementara / lokal
+__pycache__/
+.vscode/
+*.zip
+*.tar.gz
+*.png
+*.jpg
+*.jpeg
+.DS_Store
