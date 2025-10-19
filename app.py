@@ -143,6 +143,7 @@ if uploaded_file is not None:
             f"""
             <div style="
                 background-color:#f1f3f4; 
+                color:white;
                 border-radius:15px; 
                 padding:20px; 
                 text-align:center;
@@ -158,7 +159,8 @@ if uploaded_file is not None:
         st.markdown(
             f"""
             <div style="
-                background-color:#e9f7ef; 
+                background-color:#e9f7ef;
+                color:white;
                 border-radius:15px; 
                 padding:20px; 
                 text-align:center;
