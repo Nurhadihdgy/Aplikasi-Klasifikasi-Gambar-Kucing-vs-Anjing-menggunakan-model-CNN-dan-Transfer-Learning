@@ -38,12 +38,9 @@ st.title("🐶🐱 Klasifikasi Gambar Kucing vs Anjing")
 st.markdown("### Aplikasi ini menggunakan model CNN dan Transfer Learning (MobileNetV2) untuk mengklasifikasi gambar hewan peliharaan 🐾")
 st.markdown("---")
 
-
 # ===========================
 # 2. Sidebar
 # ===========================
-
-
 with st.sidebar:
     st.image("https://cdn-icons-png.flaticon.com/512/616/616408.png", width=120)
     st.header("⚙️ Pilih Pengaturan")
@@ -54,43 +51,84 @@ with st.sidebar:
     - Pilih model.
     - Lihat hasil prediksi dan tingkat keyakinan model.
     """)
-
     st.markdown("---")
     st.caption("🧠 Dibuat oleh Kelompok AI Week 8 - BINUS Online")
 
 # ===========================
-# 3. Load Model
+# 3. Load Model (dengan fallback)
 # ===========================
 @st.cache_resource
-def load_model(path):
-    return tf.keras.models.load_model(path, compile=False)
+def load_model_safe(path, model_type):
+    try:
+        # coba load normal
+        return tf.keras.models.load_model(path, compile=False)
+    except Exception as e:
+        st.warning(f"⚠️ Gagal load model. Mencoba rebuild...")
 
-cnn_model = load_model('model_cats_dogs.h5')
-mobilenet_model = load_model('mobilenet_cats_dogs.h5')
+        # Rebuild arsitektur jika model transfer learning
+        if model_type == "mobilenet":
+            base_model = tf.keras.applications.MobileNetV2(
+                input_shape=(160, 160, 3),
+                include_top=False,
+                weights=None,
+                pooling='avg'
+            )
+            model = tf.keras.Sequential([
+                base_model,
+                tf.keras.layers.BatchNormalization(),
+                tf.keras.layers.Dense(128, activation='relu'),
+                tf.keras.layers.Dropout(0.4),
+                tf.keras.layers.Dense(1, activation='sigmoid')
+            ])
+        else:
+            model = tf.keras.Sequential([
+                tf.keras.layers.Conv2D(32, (3,3), activation='relu', input_shape=(150,150,3)),
+                tf.keras.layers.MaxPooling2D(2,2),
+                tf.keras.layers.Conv2D(64, (3,3), activation='relu'),
+                tf.keras.layers.MaxPooling2D(2,2),
+                tf.keras.layers.Conv2D(128, (3,3), activation='relu'),
+                tf.keras.layers.MaxPooling2D(2,2),
+                tf.keras.layers.Flatten(),
+                tf.keras.layers.Dense(256, activation='relu'),
+                tf.keras.layers.Dense(1, activation='sigmoid')
+            ])
+        try:
+            model.load_weights(path)
+            st.success("✅ Model berhasil direbuild dan bobot dimuat.")
+            return model
+        except:
+            st.error("❌ Model gagal dimuat, pastikan file model sesuai dengan jenis arsitektur.")
+            return None
+
+cnn_model = load_model_safe('model_cats_dogs.h5', model_type='cnn')
+mobilenet_model = load_model_safe('mobilenet_cats_dogs.keras', model_type='mobilenet')
 
 # ===========================
-# 4. Upload Gambar
+# 4. Upload & Prediksi
 # ===========================
 uploaded_file = st.file_uploader("📸 Upload Gambar Kucing atau Anjing", type=["jpg", "jpeg", "png"])
 
 if uploaded_file is not None:
     image = Image.open(uploaded_file).convert('RGB')
-    st.image(image, caption="Gambar diunggah", use_container_width=True)
+    st.image(image, caption="📷 Gambar diunggah", use_container_width=True)
 
-    img_resized = image.resize((150, 150))
+    if model_type == "CNN Biasa":
+        img_resized = image.resize((150, 150))
+        model = cnn_model
+    else:
+        img_resized = image.resize((160, 160))
+        model = mobilenet_model
+
     img_array = np.array(img_resized) / 255.0
     img_array = np.expand_dims(img_array, axis=0)
 
     with st.spinner("🔍 Model sedang memproses gambar..."):
-        if model_type == "CNN Biasa":
-            pred = cnn_model.predict(img_array)
-        else:
-            pred = mobilenet_model.predict(img_array)
+        pred = model.predict(img_array)
 
     label = "🐶 Anjing" if pred[0][0] > 0.5 else "🐱 Kucing"
     confidence = pred[0][0] if pred[0][0] > 0.5 else 1 - pred[0][0]
 
-    # Animasi
+    # Animasi hasil
     if label == "🐶 Anjing":
         rain(emoji="🐶", font_size=40, falling_speed=5, animation_length="infinite")
     else:
@@ -120,7 +158,7 @@ if uploaded_file is not None:
         )
 
 else:
-    st.info("Silakan upload gambar terlebih dahulu.")
+    st.info("📤 Silakan upload gambar terlebih dahulu untuk melihat hasil prediksi.")
 
 # ===========================
 # 5. Footer
