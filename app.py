@@ -143,7 +143,7 @@ if uploaded_file is not None:
             f"""
             <div style="
                 background-color:#f1f3f4; 
-                color:white;
+                color:black;
                 border-radius:15px; 
                 padding:20px; 
                 text-align:center;
@@ -160,7 +160,7 @@ if uploaded_file is not None:
             f"""
             <div style="
                 background-color:#e9f7ef;
-                color:white;
+                color:black;
                 border-radius:15px; 
                 padding:20px; 
                 text-align:center;
