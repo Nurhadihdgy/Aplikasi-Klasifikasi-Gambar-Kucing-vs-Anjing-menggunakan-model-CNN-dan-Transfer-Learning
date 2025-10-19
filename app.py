@@ -74,7 +74,7 @@ def load_model_safe_gdrive(local_path, gdrive_file_id, model_type):
     try:
         return tf.keras.models.load_model(path, compile=False)
     except Exception as e:
-        st.warning(f"⚠️ Gagal load model. Mencoba rebuild...")
+        st.warning(f"⚠️ Gagal load model({e}). Mencoba rebuild...")
         
         if model_type == "mobilenet":
             base_model = tf.keras.applications.MobileNetV2(
